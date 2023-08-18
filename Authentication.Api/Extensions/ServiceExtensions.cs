@@ -4,6 +4,10 @@ using Authentication.Core.Settings;
 using Authentication.Core.Constants;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Authentication.Domain.Interfaces.Repositories;
+using Authentication.Infrastructure.Repositories;
+using Authentication.Services;
+using Authentication.Domain.Interfaces.Services;
 
 namespace Authentication.Api.Extensions
 {
@@ -58,6 +62,12 @@ namespace Authentication.Api.Extensions
                     .WithOrigins("http://localhost:3000", "https://localhost:7129")
                     .AllowCredentials());
             });
+        }
+
+        public static void AddServices(this IServiceCollection services)
+        {
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IJwtUtilsService, JwtUtilsService>();
         }
     }
 }

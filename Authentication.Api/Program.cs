@@ -1,9 +1,7 @@
 using System.Text.Json.Serialization;
 using Authentication.Api.Extensions;
 using Authentication.Core.Constants;
-using Authentication.Domain.Interfaces.Repositories;
 using Authentication.Infrastructure.DataAccess;
-using Authentication.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,7 +20,7 @@ builder.Services.AddDbContext<AuthDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("Auth"));
 });
 
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AddServices();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
