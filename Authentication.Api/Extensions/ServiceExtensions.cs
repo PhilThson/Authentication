@@ -17,8 +17,8 @@ namespace Authentication.Api.Extensions
 
             var tokenValidationParameters = new TokenValidationParameters
             {
-                ValidIssuer = jwtSettings.Issuer,
-                ValidAudience = jwtSettings.Audience,
+                ValidIssuer = jwtSettings?.Issuer,
+                ValidAudience = jwtSettings?.Audience,
                 IssuerSigningKey =
                     new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
                 ValidateIssuerSigningKey = true,

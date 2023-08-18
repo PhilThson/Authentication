@@ -9,4 +9,14 @@
   <ItemGroup>
     <ProjectReference Include="..\Authentication.Core\Authentication.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Remove="Models\" />
+    <None Remove="Interfaces\" />
+    <None Remove="Interfaces\Repositories\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Models\" />
+    <Folder Include="Interfaces\" />
+    <Folder Include="Interfaces\Repositories\" />
+  </ItemGroup>
 </Project>
