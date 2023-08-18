@@ -68,6 +68,13 @@ namespace Authentication.Api.Extensions
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IJwtUtilsService, JwtUtilsService>();
+            services.AddScoped<IUserService, UserService>();
+        }
+
+        public static void AddSettings(this IServiceCollection services,
+            IConfiguration configuration)
+        {
+            services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
         }
     }
 }

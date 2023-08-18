@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Authentication.Services;
 
-public class UserService
+public class UserService : IUserService
 {
     private readonly IJwtUtilsService _jwtUtils;
     private readonly IUnitOfWork _unitOfWork;
