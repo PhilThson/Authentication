@@ -1,19 +1,26 @@
 ﻿using Authentication.Core.Exceptions;
+using Authentication.Core.Security;
 using Authentication.Core.Settings;
-using Authentication.Domain.DTOs;
+using Authentication.Domain.DTOs.Common;
+using Authentication.Domain.DTOs.Create;
+using Authentication.Domain.DTOs.Read;
+using Authentication.Domain.Extensions;
 using Authentication.Domain.Interfaces.Repositories;
 using Authentication.Domain.Interfaces.Services;
+using Authentication.Domain.Models;
 using Microsoft.Extensions.Options;
 
 namespace Authentication.Services;
 
 public class UserService : IUserService
 {
+    #region Private fields
     private readonly IJwtUtilsService _jwtUtils;
     private readonly IUnitOfWork _unitOfWork;
     private readonly JwtSettings _jwtSettings;
+    #endregion
 
-
+    #region Constructor
     public UserService(IJwtUtilsService jwtUtils,
         IUnitOfWork unitOfWork,
         IOptions<JwtSettings> options)
@@ -22,9 +29,14 @@ public class UserService : IUserService
         _unitOfWork = unitOfWork;
         _jwtSettings = options.Value;
     }
+    #endregion
+
+    #region Methods
 
     //public async Task<IEnumerable<T>> GetAll<T>() =>
     //    _mapper.Map<IEnumerable<T>>(await _unitOfWork.User.GetAllAsync());
+
+    #region Authenticate
 
     public async Task<AuthenticateResponseDto> Authenticate(AuthenticateRequestDto model)
     {
@@ -48,6 +60,10 @@ public class UserService : IUserService
             RefreshToken = user.RefreshToken
         };
     }
+
+    #endregion
+
+    #region Refresh token
 
     public async Task<AuthenticateResponseDto> RefreshToken(string refreshToken)
     {
@@ -80,6 +96,50 @@ public class UserService : IUserService
         };
     }
 
+    #endregion
+
+    #region Get User by Id
+
+    public async Task<ReadUserDto> GetById(int id)
+    {
+        if (id == default)
+            throw new DataValidationException("Invalid user identifier");
+
+        var user = await _unitOfWork.User.GetByIdAsync(id) ??
+            throw new NotFoundException("User not found");
+
+        return user.MapToReadDto();
+    }
+
+    #endregion
+
+    #region Register user
+
+    public async Task<ReadUserDto> Register(CreateUserDto createUserDto)
+    {
+        if (_unitOfWork.User.Exists(u => u.Email == createUserDto.Email))
+            throw new DataValidationException("Email address is already registered");
+
+        if (_unitOfWork.User.Exists(u => u.Name == createUserDto.Name))
+            throw new DataValidationException("Given Name is already taken");
+
+        var user = new User
+        {
+            Name = createUserDto.Name,
+            Email = createUserDto.Email,
+            PasswordHash = PasswordHasher.Hash(createUserDto.Password)
+        };
+
+        _unitOfWork.User.Add(user);
+        await _unitOfWork.SaveAsync();
+
+        return user.MapToReadDto();
+    }
+
+    #endregion
+
+    #region Private methods
+
     private int GetRefreshTokenExpirationTime()
     {
         if (!int.TryParse(_jwtSettings.RefreshTokenExpirationTimeDays, out int expirationDays))
@@ -87,4 +147,8 @@ public class UserService : IUserService
 
         return expirationDays;
     }
+
+    #endregion
+
+    #endregion
 }

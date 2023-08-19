@@ -1,7 +1,8 @@
 using System.Text.Json.Serialization;
 using Authentication.Api.Extensions;
 using Authentication.Core.Constants;
-using Authentication.Domain.DTOs;
+using Authentication.Domain.DTOs.Common;
+using Authentication.Domain.DTOs.Create;
 using Authentication.Domain.Interfaces.Services;
 using Authentication.Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -83,5 +84,27 @@ app.MapGet("/whoAmI", async ctx =>
 .WithName("User Info")
 .WithOpenApi()
 .RequireAuthorization(AuthConstants.TokenPolicy);
+
+app.MapGet("/user/{id}", async (int id) =>
+{
+    using var scope = app.Services.CreateScope();
+    var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+    var readUserDto = await userService.GetById(id);
+    return readUserDto;
+})
+.WithName("Get user by Id")
+.WithOpenApi()
+.RequireAuthorization(AuthConstants.TokenPolicy);
+
+app.MapPost("/register", async (CreateUserDto createUserDto) =>
+{
+    using var scope = app.Services.CreateScope();
+    var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
+    var readUserDto = await userService.Register(createUserDto);
+    return readUserDto;
+})
+.WithName("Register user")
+.WithOpenApi()
+.AllowAnonymous();
 
 app.Run();

@@ -15,6 +15,10 @@
     <None Remove="Interfaces\Repositories\" />
     <None Remove="Interfaces\Services\" />
     <None Remove="DTOs\" />
+    <None Remove="DTOs\Common\" />
+    <None Remove="DTOs\Read\" />
+    <None Remove="DTOs\Create\" />
+    <None Remove="Extensions\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\" />
@@ -22,5 +26,9 @@
     <Folder Include="Interfaces\Repositories\" />
     <Folder Include="Interfaces\Services\" />
     <Folder Include="DTOs\" />
+    <Folder Include="DTOs\Common\" />
+    <Folder Include="DTOs\Read\" />
+    <Folder Include="DTOs\Create\" />
+    <Folder Include="Extensions\" />
   </ItemGroup>
 </Project>
