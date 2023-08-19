@@ -9,6 +9,9 @@
 
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'https' " />
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'http' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.10">
@@ -22,9 +25,11 @@
 
   <ItemGroup>
     <None Remove="Extensions\" />
+    <None Remove="CustomMiddleware\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Extensions\" />
+    <Folder Include="CustomMiddleware\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Authentication.Services\Authentication.Services.csproj">

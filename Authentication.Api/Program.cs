@@ -38,6 +38,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseExceptionHandling();
+
 app.UseCors(AuthConstants.CorsPolicy);
 
 app.UseAuthentication();
