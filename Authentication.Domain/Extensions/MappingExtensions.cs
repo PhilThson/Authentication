@@ -11,7 +11,8 @@ namespace Authentication.Domain.Extensions
 			{
 				Id = user.Id,
 				Name = user.Name,
-				Email = user.Email
+				Email = user.Email,
+				IsActive = user.IsActive
 			};
 		}
 	}

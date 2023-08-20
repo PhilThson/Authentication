@@ -12,7 +12,12 @@ public static class UserEndpoints
 {
     public static void MapUserEndpoints(this WebApplication app)
     {
-        app.MapGet("/user/{id}", GetUserById)
+        app.MapGet("/users", GetAllUsers)
+            .WithName("GetAllUsers")
+            .WithOpenApi()
+            .RequireAuthorization(AuthConstants.TokenPolicy);
+
+        app.MapGet("/users/{id}", GetUserById)
             .WithName("GetUserById")
             .WithOpenApi()
             .RequireAuthorization(AuthConstants.TokenPolicy);
@@ -36,6 +41,13 @@ public static class UserEndpoints
             .WithName("GetCurrentUser")
             .WithOpenApi()
             .RequireAuthorization(AuthConstants.TokenPolicy);
+    }
+
+    public static async Task<Ok<IEnumerable<ReadUserDto>>>
+        GetAllUsers(IUserService userService)
+    {
+        var users = await userService.GetAll();
+        return TypedResults.Ok(users);
     }
 
     public static async Task<Results<Ok<ReadUserDto>, NotFound>>
@@ -66,7 +78,8 @@ public static class UserEndpoints
         return TypedResults.Ok(responseDto);
     }
 
-    public static IResult GetCurrentUser(HttpContext httpContext)
+    public static IResult
+        GetCurrentUser(HttpContext httpContext)
     {
         var id = httpContext.User.FindFirst(c => c.Type == AuthConstants.UserIdClaim)?.Value;
         var name = httpContext.User.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;

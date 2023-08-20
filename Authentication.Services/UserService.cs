@@ -33,9 +33,6 @@ public class UserService : IUserService
 
     #region Methods
 
-    //public async Task<IEnumerable<T>> GetAll<T>() =>
-    //    _mapper.Map<IEnumerable<T>>(await _unitOfWork.User.GetAllAsync());
-
     #region Authenticate
 
     public async Task<AuthenticateResponseDto> Authenticate(AuthenticateRequestDto model)
@@ -94,6 +91,16 @@ public class UserService : IUserService
             JwtToken = newJwtToken,
             RefreshToken = newRefreshToken
         };
+    }
+
+    #endregion
+
+    #region Get all users
+
+    public async Task<IEnumerable<ReadUserDto>> GetAll()
+    {
+        var allUsers = await _unitOfWork.User.GetAllAsync();
+        return allUsers.Select(u => u.MapToReadDto());
     }
 
     #endregion

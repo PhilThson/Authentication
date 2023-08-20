@@ -1,9 +1,6 @@
 using System.Text.Json.Serialization;
 using Authentication.Api.Extensions;
 using Authentication.Core.Constants;
-using Authentication.Domain.DTOs.Common;
-using Authentication.Domain.DTOs.Create;
-using Authentication.Domain.Interfaces.Services;
 using Authentication.Infrastructure.DataAccess;
 using Microsoft.EntityFrameworkCore;
 
@@ -48,9 +45,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapUserEndpoints();
-
-app.MapGet("/weatherforecast", () => { })
-.WithName("GetWeatherForecast")
-.WithOpenApi();
 
 app.Run();
