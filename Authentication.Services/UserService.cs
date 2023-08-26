@@ -96,13 +96,14 @@ public class UserService : IUserService
     #endregion
 
     #region Get all users
-
-    public async Task<IEnumerable<ReadUserDto>> GetAll()
+    public async Task<IEnumerable<ReadSimpleUserDto>> GetAll(string ids)
     {
-        var allUsers = await _unitOfWork.User.GetAllAsync();
-        return allUsers.Select(u => u.MapToReadDto());
-    }
+        if (!string.IsNullOrEmpty(ids))
+            return await GetByIds(ids);
 
+        var allUsers = await _unitOfWork.User.GetAllAsync();
+        return allUsers.Select(u => u.MapToSimpleDto());
+    }
     #endregion
 
     #region Get User by Id
@@ -153,6 +154,19 @@ public class UserService : IUserService
             throw new Exception("Error parsing refresh token expiration time");
 
         return expirationDays;
+    }
+
+    private async Task<IEnumerable<ReadSimpleUserDto>> GetByIds(string ids)
+    {
+        var userIdsString = ids.Split(",", StringSplitOptions.TrimEntries).ToList();
+        var userIds = userIdsString
+            .Select(s => int.TryParse(s, out int id) ? id : 0)
+            .Distinct();
+
+        var users = await _unitOfWork.User.GetByConditionAsync(u =>
+            userIds.Contains(u.Id));
+
+        return users.Select(u => u.MapToSimpleDto());
     }
 
     #endregion

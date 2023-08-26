@@ -1,9 +1,7 @@
 ﻿namespace Authentication.Domain.DTOs.Read;
 
-public record ReadUserDto
+public record ReadUserDto : ReadSimpleUserDto
 {
-	public int Id { get; init; }
-	public string Name { get; init; }
 	public string Email { get; init; }
 	public bool IsActive { get; set; }
 }

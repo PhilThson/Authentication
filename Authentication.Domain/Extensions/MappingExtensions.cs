@@ -5,16 +5,21 @@ namespace Authentication.Domain.Extensions
 {
     public static class MappingExtensions
 	{
-		public static ReadUserDto MapToReadDto(this User user)
-		{
-			return new ReadUserDto
+		public static ReadSimpleUserDto MapToSimpleDto(this User user) =>
+            new ReadSimpleUserDto
+			{
+				Id = user.Id,
+				Name = user.Name
+			};
+
+		public static ReadUserDto MapToReadDto(this User user) =>
+			new ReadUserDto
 			{
 				Id = user.Id,
 				Name = user.Name,
 				Email = user.Email,
 				IsActive = user.IsActive
 			};
-		}
 	}
 }
 

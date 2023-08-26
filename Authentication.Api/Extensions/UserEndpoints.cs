@@ -43,10 +43,10 @@ public static class UserEndpoints
             .RequireAuthorization(AuthConstants.TokenPolicy);
     }
 
-    public static async Task<Ok<IEnumerable<ReadUserDto>>>
-        GetAllUsers(IUserService userService)
+    public static async Task<Ok<IEnumerable<ReadSimpleUserDto>>>
+        GetAllUsers(string ids, IUserService userService)
     {
-        var users = await userService.GetAll();
+        var users = await userService.GetAll(ids);
         return TypedResults.Ok(users);
     }
 

@@ -8,7 +8,7 @@ namespace Authentication.Domain.Interfaces.Services
     {
         Task<AuthenticateResponseDto> Authenticate(AuthenticateRequestDto model);
         Task<AuthenticateResponseDto> RefreshToken(string refreshToken);
-        Task<IEnumerable<ReadUserDto>> GetAll();
+        Task<IEnumerable<ReadSimpleUserDto>> GetAll(string ids);
         Task<ReadUserDto> GetById(int id);
         Task<ReadUserDto> Register(CreateUserDto createUserDto);
     }
