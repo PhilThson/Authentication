@@ -62,12 +62,13 @@ public class UserService : IUserService
 
     #region Refresh token
 
-    public async Task<AuthenticateResponseDto> RefreshToken(string refreshToken)
+    public async Task<AuthenticateResponseDto> RefreshToken(RefreshTokenRequest refreshToken)
     {
-        if (string.IsNullOrEmpty(refreshToken))
+        if (string.IsNullOrEmpty(refreshToken.Token))
             throw new DataValidationException("No refresh token provided");
 
-        var user = await _unitOfWork.User.GetFirstAsync(u => u.RefreshToken == refreshToken) ??
+        var user = await _unitOfWork.User.GetFirstAsync(u =>
+                u.RefreshToken == refreshToken.Token) ??
             throw new DataValidationException("Invalid token provided");
 
         if (user.RefreshTokenIsRevoked)
@@ -96,7 +97,7 @@ public class UserService : IUserService
     #endregion
 
     #region Get all users
-    public async Task<IEnumerable<ReadSimpleUserDto>> GetAll(string ids)
+    public async Task<IEnumerable<ReadSimpleUserDto>> GetAll(string? ids)
     {
         if (!string.IsNullOrEmpty(ids))
             return await GetByIds(ids);

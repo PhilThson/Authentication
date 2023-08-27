@@ -7,8 +7,8 @@ namespace Authentication.Domain.Interfaces.Services
     public interface IUserService
     {
         Task<AuthenticateResponseDto> Authenticate(AuthenticateRequestDto model);
-        Task<AuthenticateResponseDto> RefreshToken(string refreshToken);
-        Task<IEnumerable<ReadSimpleUserDto>> GetAll(string ids);
+        Task<AuthenticateResponseDto> RefreshToken(RefreshTokenRequest refreshToken);
+        Task<IEnumerable<ReadSimpleUserDto>> GetAll(string? ids);
         Task<ReadUserDto> GetById(int id);
         Task<ReadUserDto> Register(CreateUserDto createUserDto);
     }

@@ -44,7 +44,7 @@ public static class UserEndpoints
     }
 
     public static async Task<Ok<IEnumerable<ReadSimpleUserDto>>>
-        GetAllUsers(string ids, IUserService userService)
+        GetAllUsers(string? ids, IUserService userService)
     {
         var users = await userService.GetAll(ids);
         return TypedResults.Ok(users);
@@ -72,7 +72,7 @@ public static class UserEndpoints
     }
 
     public static async Task<Results<Ok<AuthenticateResponseDto>, NotFound, BadRequest>>
-        RefreshToken(string refreshToken, IUserService userService)
+        RefreshToken(RefreshTokenRequest refreshToken, IUserService userService)
     {
         var responseDto = await userService.RefreshToken(refreshToken);
         return TypedResults.Ok(responseDto);
