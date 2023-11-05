@@ -10,10 +10,12 @@
     <None Remove="Settings\" />
     <None Remove="Exceptions\" />
     <None Remove="Constants\" />
+    <None Remove="Security\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Settings\" />
     <Folder Include="Exceptions\" />
     <Folder Include="Constants\" />
+    <Folder Include="Security\" />
   </ItemGroup>
 </Project>
