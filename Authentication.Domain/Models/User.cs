@@ -10,7 +10,7 @@ namespace Authentication.Domain.Models
         public int Id { get; set; }
 
         [StringLength(64)]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         [StringLength(128)]
         public string Email { get; set; }
@@ -27,6 +27,8 @@ namespace Authentication.Domain.Models
             RefreshTokenExpiration <= DateTime.Now; }
 
         public bool IsActive { get; set; } = true;
+
+        public bool IsAdmin { get; set; } = false;
     }
 }
 

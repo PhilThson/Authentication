@@ -33,9 +33,6 @@ namespace Authentication.Api.Extensions
                 ClockSkew = TimeSpan.Zero
             };
 
-            //można zarejestrować w celu ponownego użycia w aplikacji
-            //services.AddSingleton(tokenValidationParameters);
-
             return services.AddAuthentication()
                 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, o =>
                     o.TokenValidationParameters = tokenValidationParameters);

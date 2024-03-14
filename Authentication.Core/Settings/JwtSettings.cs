@@ -4,8 +4,8 @@
 	{
         public string Issuer { get; set; }
         public string Audience { get; set; }
-        public string ExpirationTimeMin { get; set; }
-        public string RefreshTokenExpirationTimeDays { get; set; }
+        public int ExpirationTimeMin { get; set; }
+        public int RefreshTokenExpirationTimeDays { get; set; } = 1;
     }
 }
 

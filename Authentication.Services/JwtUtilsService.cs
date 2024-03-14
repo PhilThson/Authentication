@@ -40,13 +40,10 @@ namespace Authentication.Services
                 new Claim(AuthConstants.UserIdClaim, user.Id.ToString())
             };
 
-            if (!int.TryParse(_jwtSettings.ExpirationTimeMin, out int expiration))
-                throw new Exception("Error parsing token expiration time");
-
             var tokenDescriptior = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.Add(TimeSpan.FromMinutes(expiration)),
+                Expires = DateTime.Now.AddDays(_jwtSettings.RefreshTokenExpirationTimeDays),
                 Issuer = _jwtSettings.Issuer,
                 Audience = _jwtSettings.Audience,
                 SigningCredentials = new SigningCredentials(

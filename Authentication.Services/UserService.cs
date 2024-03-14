@@ -35,26 +35,28 @@ public class UserService : IUserService
 
     #region Authenticate
 
-    public async Task<AuthenticateResponseDto> Authenticate(AuthenticateRequestDto model)
+    public async Task<AuthenticateResponseDto> Authenticate(AuthenticateRequestDto authRequest)
     {
-        var user = await _unitOfWork.User.GetFirstAsync(u => u.Email == model.Email) ??
-            throw new NotFoundException("User not exists");
+        var user = await _unitOfWork.User.GetFirstAsync(u => u.Email == authRequest.Email) ??
+            throw new UnauthorizedAccessException("Invalid email or password.");
+
+        if (!PasswordHasher.Verify(authRequest.Password, user.PasswordHash))
+            throw new UnauthorizedAccessException("Invalid email or password.");
 
         if (!user.IsActive)
-            throw new UnauthorizedAccessException();
-
-        var expirationDays = GetRefreshTokenExpirationTime();
-
+            throw new UnauthorizedAccessException("User blocked. Please contact administrator.");
+        
         var jwtToken = _jwtUtils.GenerateToken(user);
         user.RefreshToken = _jwtUtils.GenerateRefreshToken();
-        user.RefreshTokenExpiration = DateTime.Now.AddDays(expirationDays);
+        user.RefreshTokenExpiration = DateTime.Now.AddDays(_jwtSettings.RefreshTokenExpirationTimeDays);
 
-        _unitOfWork.Save();
+        await _unitOfWork.SaveAsync();
 
         return new AuthenticateResponseDto
         {
             JwtToken = jwtToken,
-            RefreshToken = user.RefreshToken
+            RefreshToken = user.RefreshToken,
+            RefreshTokenExpirationTimeDays = _jwtSettings.RefreshTokenExpirationTimeDays
         };
     }
 
@@ -62,13 +64,12 @@ public class UserService : IUserService
 
     #region Refresh token
 
-    public async Task<AuthenticateResponseDto> RefreshToken(RefreshTokenRequest refreshToken)
+    public async Task<AuthenticateResponseDto> RefreshToken(string? refreshToken)
     {
-        if (string.IsNullOrEmpty(refreshToken.Token))
+        if (string.IsNullOrEmpty(refreshToken))
             throw new DataValidationException("No refresh token provided");
 
-        var user = await _unitOfWork.User.GetFirstAsync(u =>
-                u.RefreshToken == refreshToken.Token) ??
+        var user = await _unitOfWork.User.GetFirstAsync(u => u.RefreshToken == refreshToken) ??
             throw new DataValidationException("Invalid token provided");
 
         if (user.RefreshTokenIsRevoked)
@@ -76,21 +77,20 @@ public class UserService : IUserService
 
         if (user.RefreshTokenExpiration!.Value < DateTime.Now)
             throw new AuthenticationException("Refresh token expired");
-
-        var expirationDays = GetRefreshTokenExpirationTime();
-
+        
         var newRefreshToken = _jwtUtils.GenerateRefreshToken();
         var newJwtToken = _jwtUtils.GenerateToken(user);
 
         user.RefreshToken = newRefreshToken;
-        user.RefreshTokenExpiration = DateTime.Now.AddDays(expirationDays);
+        user.RefreshTokenExpiration = DateTime.Now.AddDays(_jwtSettings.RefreshTokenExpirationTimeDays);
 
-        _unitOfWork.Save();
+        await _unitOfWork.SaveAsync();
 
         return new AuthenticateResponseDto
         {
             JwtToken = newJwtToken,
-            RefreshToken = newRefreshToken
+            RefreshToken = newRefreshToken,
+            RefreshTokenExpirationTimeDays = _jwtSettings.RefreshTokenExpirationTimeDays
         };
     }
 
@@ -148,14 +148,6 @@ public class UserService : IUserService
     #endregion
 
     #region Private methods
-
-    private int GetRefreshTokenExpirationTime()
-    {
-        if (!int.TryParse(_jwtSettings.RefreshTokenExpirationTimeDays, out int expirationDays))
-            throw new Exception("Error parsing refresh token expiration time");
-
-        return expirationDays;
-    }
 
     private async Task<IEnumerable<ReadSimpleUserDto>> GetByIds(string ids)
     {
