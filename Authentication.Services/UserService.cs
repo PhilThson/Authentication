@@ -108,7 +108,6 @@ public class UserService : IUserService
     #endregion
 
     #region Get User by Id
-
     public async Task<ReadUserDto> GetById(int id)
     {
         if (id == default)
@@ -119,7 +118,6 @@ public class UserService : IUserService
 
         return user.MapToReadDto();
     }
-
     #endregion
 
     #region Register user
@@ -129,6 +127,11 @@ public class UserService : IUserService
         if (_unitOfWork.User.Exists(u => u.Email == createUserDto.Email))
             throw new DataValidationException("Email address is already registered");
 
+        if (string.IsNullOrEmpty(createUserDto.Name))
+        {
+            createUserDto.Name = createUserDto.Email.Substring(0, createUserDto.Email.IndexOf("@"));
+        }
+        
         if (_unitOfWork.User.Exists(u => u.Name == createUserDto.Name))
             throw new DataValidationException("Given Name is already taken");
 

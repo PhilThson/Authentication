@@ -44,28 +44,28 @@ public static class UserEndpoints
             .RequireAuthorization(AuthConstants.TokenPolicy);
     }
 
-    public static async Task<Ok<IEnumerable<ReadSimpleUserDto>>>
+    private static async Task<Ok<IEnumerable<ReadSimpleUserDto>>>
         GetAllUsers(string? ids, IUserService userService)
     {
         var users = await userService.GetAll(ids);
         return TypedResults.Ok(users);
     }
 
-    public static async Task<Results<Ok<ReadUserDto>, NotFound>>
+    private static async Task<Results<Ok<ReadUserDto>, NotFound>>
         GetUserById(int id, IUserService userService)
     {
         var readUserDto = await userService.GetById(id);
         return TypedResults.Ok(readUserDto);
     }
 
-    public static async Task<Results<Created<ReadUserDto>, BadRequest>>
+    private static async Task<Results<Created<ReadUserDto>, BadRequest>>
         RegisterUser(CreateUserDto createUserDto, IUserService userService)
     {
         var readUserDto = await userService.Register(createUserDto);
         return TypedResults.Created(nameof(GetUserById), readUserDto);
     }
 
-    public static async Task<Results<Ok<ReadAuthenticationDto>, NotFound, BadRequest>>
+    private static async Task<Results<Ok<ReadAuthenticationDto>, NotFound, BadRequest>>
         Authenticate(AuthenticateRequestDto authenticateDto, IUserService userService, HttpContext httpContext)
     {
         var responseDto = await userService.Authenticate(authenticateDto);
@@ -77,7 +77,7 @@ public static class UserEndpoints
         });
     }
 
-    public static async Task<Results<Ok<ReadAuthenticationDto>, NotFound, BadRequest>>
+    private static async Task<Results<Ok<ReadAuthenticationDto>, NotFound, BadRequest>>
         RefreshToken(IUserService userService, HttpContext httpContext)
     {
         if (!httpContext.Request.Cookies.TryGetValue("RefreshToken", out var refreshToken))
@@ -93,7 +93,7 @@ public static class UserEndpoints
         });
     }
 
-    public static IResult
+    private static IResult
         GetCurrentUser(HttpContext httpContext)
     {
         var id = httpContext.User.FindFirst(c => c.Type == AuthConstants.UserIdClaim)?.Value;
@@ -102,7 +102,7 @@ public static class UserEndpoints
     }
 
     private static CookieOptions GetCookieOptions(int refreshTokenExpirationTimeDays) => 
-        new CookieOptions()
+        new()
         {
             HttpOnly = true,
             Secure = true,
