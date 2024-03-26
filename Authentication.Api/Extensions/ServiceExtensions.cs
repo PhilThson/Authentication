@@ -30,6 +30,7 @@ namespace Authentication.Api.Extensions
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateLifetime = true,
+                //tokens expire exactly at token expiration time (instead of 5 minutes later)
                 ClockSkew = TimeSpan.Zero
             };
 
@@ -45,19 +46,25 @@ namespace Authentication.Api.Extensions
                 c.AddPolicy(AuthConstants.TokenPolicy, policy => policy
                     .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                     .RequireClaim(AuthConstants.UserIdClaim)
-                    //.RequireAuthenticatedUser()
                     );
             });
         }
 
-        public static IServiceCollection EnableCors(this IServiceCollection services)
+        public static void EnableCors(this IServiceCollection services, IConfiguration config)
         {
-            return services.AddCors(options =>
+            var allowedOriginsString = config.GetValue<string>("AllowedOrigins");
+            var allowedOrigins = Array.Empty<string>();
+            if (!string.IsNullOrEmpty(allowedOriginsString))
+            {
+                allowedOrigins = allowedOriginsString.Split(",", StringSplitOptions.TrimEntries);
+            }
+
+            services.AddCors(options =>
             {
                 options.AddPolicy(AuthConstants.CorsPolicy, builder => builder
                     .AllowAnyHeader()
                     .AllowAnyMethod()
-                    .WithOrigins("http://localhost:3000", "https://localhost:7129")
+                    .WithOrigins(allowedOrigins)
                     .AllowCredentials());
             });
         }

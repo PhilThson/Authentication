@@ -48,7 +48,7 @@ public class UserService : IUserService
         
         var jwtToken = _jwtUtils.GenerateToken(user);
         user.RefreshToken = _jwtUtils.GenerateRefreshToken();
-        user.RefreshTokenExpiration = DateTime.Now.AddDays(_jwtSettings.RefreshTokenExpirationTimeDays);
+        user.RefreshTokenExpiration = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationTimeDays);
 
         await _unitOfWork.SaveAsync();
 
@@ -75,14 +75,14 @@ public class UserService : IUserService
         if (user.RefreshTokenIsRevoked)
             throw new AuthenticationException("Refresh token is revoked");
 
-        if (user.RefreshTokenExpiration!.Value < DateTime.Now)
+        if (user.RefreshTokenExpiration!.Value < DateTime.UtcNow)
             throw new AuthenticationException("Refresh token expired");
         
         var newRefreshToken = _jwtUtils.GenerateRefreshToken();
         var newJwtToken = _jwtUtils.GenerateToken(user);
 
         user.RefreshToken = newRefreshToken;
-        user.RefreshTokenExpiration = DateTime.Now.AddDays(_jwtSettings.RefreshTokenExpirationTimeDays);
+        user.RefreshTokenExpiration = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationTimeDays);
 
         await _unitOfWork.SaveAsync();
 
@@ -129,7 +129,7 @@ public class UserService : IUserService
 
         if (string.IsNullOrEmpty(createUserDto.Name))
         {
-            createUserDto.Name = createUserDto.Email.Substring(0, createUserDto.Email.IndexOf("@"));
+            createUserDto.Name = createUserDto.Email?[..createUserDto.Email.IndexOf("@")];
         }
         
         if (_unitOfWork.User.Exists(u => u.Name == createUserDto.Name))

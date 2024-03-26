@@ -106,6 +106,6 @@ public static class UserEndpoints
         {
             HttpOnly = true,
             Secure = true,
-            Expires = DateTimeOffset.Now.AddDays(refreshTokenExpirationTimeDays)
+            Expires = DateTimeOffset.UtcNow.AddDays(refreshTokenExpirationTimeDays)
         };
 }
