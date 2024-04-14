@@ -13,7 +13,6 @@
     <None Remove="Security\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Settings\" />
     <Folder Include="Exceptions\" />
     <Folder Include="Constants\" />
     <Folder Include="Security\" />

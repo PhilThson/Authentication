@@ -1,11 +1,14 @@
 ﻿using System.Security.Claims;
 using Authentication.Core.Constants;
 using Authentication.Core.Exceptions;
+using Authentication.Core.Settings;
 using Authentication.Domain.DTOs.Common;
 using Authentication.Domain.DTOs.Create;
 using Authentication.Domain.DTOs.Read;
 using Authentication.Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Authentication.Api.Extensions;
 
@@ -66,11 +69,15 @@ public static class UserEndpoints
     }
 
     private static async Task<Results<Ok<ReadAuthenticationDto>, NotFound, BadRequest>>
-        Authenticate(AuthenticateRequestDto authenticateDto, IUserService userService, HttpContext httpContext)
+        Authenticate([FromBody] AuthenticateRequestDto authenticateDto, IUserService userService, 
+            IOptionsMonitor<CookieSettings> cookieOptions, HttpContext httpContext)
     {
         var responseDto = await userService.Authenticate(authenticateDto);
-        httpContext.Response.Cookies.Append("RefreshToken", responseDto.RefreshToken, 
-            GetCookieOptions(responseDto.RefreshTokenExpirationTimeDays));
+        httpContext.Response.Cookies.Append(
+            "RefreshToken",
+            responseDto.RefreshToken, 
+            GetCookieOptions(cookieOptions.CurrentValue, responseDto.RefreshTokenExpirationTimeDays));
+        
         return TypedResults.Ok(new ReadAuthenticationDto()
         {
             JwtToken = responseDto.JwtToken
@@ -78,15 +85,19 @@ public static class UserEndpoints
     }
 
     private static async Task<Results<Ok<ReadAuthenticationDto>, NotFound, BadRequest>>
-        RefreshToken(IUserService userService, HttpContext httpContext)
+        RefreshToken([FromServices] IUserService userService, HttpContext httpContext,
+            IOptionsMonitor<CookieSettings> cookieOptions)
     {
         if (!httpContext.Request.Cookies.TryGetValue("RefreshToken", out var refreshToken))
         {
             throw new DataValidationException("No refresh token provided");
         }
         var responseDto = await userService.RefreshToken(refreshToken);
-        httpContext.Response.Cookies.Append("RefreshToken", responseDto.RefreshToken, 
-            GetCookieOptions(responseDto.RefreshTokenExpirationTimeDays));
+        httpContext.Response.Cookies.Append(
+            "RefreshToken", 
+            responseDto.RefreshToken, 
+            GetCookieOptions(cookieOptions.CurrentValue, responseDto.RefreshTokenExpirationTimeDays));
+        
         return TypedResults.Ok(new ReadAuthenticationDto()
         {
             JwtToken = responseDto.JwtToken
@@ -101,11 +112,15 @@ public static class UserEndpoints
         return Results.Ok(new { Id = id, Name = name });
     }
 
-    private static CookieOptions GetCookieOptions(int refreshTokenExpirationTimeDays) => 
+    private static CookieOptions GetCookieOptions(CookieSettings settings, int refreshTokenExpirationTimeDays) => 
         new()
         {
-            HttpOnly = true,
-            Secure = true,
-            Expires = DateTimeOffset.UtcNow.AddDays(refreshTokenExpirationTimeDays)
+            HttpOnly = settings.HttpOnly,
+            IsEssential = settings.IsEssential,
+            Secure = settings.Secure,
+            SameSite = SameSiteMode.Unspecified,
+            Expires = DateTimeOffset.UtcNow.AddDays(refreshTokenExpirationTimeDays),
+            MaxAge = TimeSpan.FromDays(refreshTokenExpirationTimeDays),
+            Domain = settings.Domain
         };
 }

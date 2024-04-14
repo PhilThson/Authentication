@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using System.Text;
+﻿using System.Text;
 using Authentication.Core.Settings;
 using Authentication.Core.Constants;
 using Microsoft.IdentityModel.Tokens;
@@ -14,7 +13,7 @@ namespace Authentication.Api.Extensions
 {
     public static class ServiceExtensions
 	{
-        public static AuthenticationBuilder AddTokenAuthentication(this IServiceCollection services,
+        public static void AddTokenAuthentication(this IServiceCollection services,
             IConfiguration configuration)
         {
             var jwtSettings = configuration.GetSection(nameof(JwtSettings)).Get<JwtSettings>();
@@ -34,19 +33,19 @@ namespace Authentication.Api.Extensions
                 ClockSkew = TimeSpan.Zero
             };
 
-            return services.AddAuthentication()
+            services.AddAuthentication()
                 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, o =>
                     o.TokenValidationParameters = tokenValidationParameters);
         }
 
-        public static IServiceCollection AddTokenAuthorizationPolicy(this IServiceCollection services)
+        public static void AddTokenAuthorizationPolicy(this IServiceCollection services)
         {
-            return services.AddAuthorization(c =>
+            services.AddAuthorization(c =>
             {
                 c.AddPolicy(AuthConstants.TokenPolicy, policy => policy
                     .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                     .RequireClaim(AuthConstants.UserIdClaim)
-                    );
+                );
             });
         }
 
@@ -76,10 +75,10 @@ namespace Authentication.Api.Extensions
             services.AddScoped<IUserService, UserService>();
         }
 
-        public static void AddSettings(this IServiceCollection services,
-            IConfiguration configuration)
+        public static void AddSettings(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
+            services.Configure<CookieSettings>(configuration.GetSection(nameof(CookieSettings)));
         }
 
         public static void AddSwagger(this IServiceCollection services)
