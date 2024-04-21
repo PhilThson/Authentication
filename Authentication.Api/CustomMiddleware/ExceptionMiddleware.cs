@@ -45,7 +45,7 @@ namespace Authentication.Api.CustomMiddleware
         }
 
         private static string GetResponseMessage(string message) =>
-            JsonSerializer.Serialize(new { Message = message });
+            JsonSerializer.Serialize(new { message = message });
     }
 }
 
