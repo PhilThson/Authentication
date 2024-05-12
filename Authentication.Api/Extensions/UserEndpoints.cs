@@ -29,7 +29,7 @@ public static class UserEndpoints
         app.MapPost("/register", RegisterUser)
             .WithName("RegisterUser")
             .WithOpenApi()
-            .AllowAnonymous();
+            .RequireAuthorization(AuthConstants.ApiKeyAuthPolicy);
 
         app.MapPost("/authenticate", Authenticate)
             .WithName("Authenticate")

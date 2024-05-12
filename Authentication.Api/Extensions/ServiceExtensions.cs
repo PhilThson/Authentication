@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Authentication.Api.Helpers;
 using Authentication.Core.Settings;
 using Authentication.Core.Constants;
 using Microsoft.IdentityModel.Tokens;
@@ -7,6 +8,7 @@ using Authentication.Domain.Interfaces.Repositories;
 using Authentication.Infrastructure.Repositories;
 using Authentication.Services;
 using Authentication.Domain.Interfaces.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
 
 namespace Authentication.Api.Extensions
@@ -35,7 +37,8 @@ namespace Authentication.Api.Extensions
 
             services.AddAuthentication()
                 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, o =>
-                    o.TokenValidationParameters = tokenValidationParameters);
+                    o.TokenValidationParameters = tokenValidationParameters)
+                .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthHandler>(AuthConstants.ApiKeyAuth, null);
         }
 
         public static void AddTokenAuthorizationPolicy(this IServiceCollection services)
@@ -46,6 +49,9 @@ namespace Authentication.Api.Extensions
                     .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                     .RequireClaim(AuthConstants.UserIdClaim)
                 );
+                c.AddPolicy(AuthConstants.ApiKeyAuthPolicy, policy => policy
+                    .AddAuthenticationSchemes(AuthConstants.ApiKeyAuth)
+                    .RequireAuthenticatedUser());
             });
         }
 
