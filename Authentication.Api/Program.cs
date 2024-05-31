@@ -11,7 +11,7 @@ builder.Services.AddControllers()
         .JsonSerializerOptions.DefaultIgnoreCondition
             = JsonIgnoreCondition.WhenWritingNull);
 
-builder.Services.EnableCors();
+builder.Services.EnableCors(builder.Configuration);
 builder.Services.AddTokenAuthentication(builder.Configuration);
 builder.Services.AddTokenAuthorizationPolicy();
 

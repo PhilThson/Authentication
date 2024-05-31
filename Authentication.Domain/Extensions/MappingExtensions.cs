@@ -6,14 +6,15 @@ namespace Authentication.Domain.Extensions
     public static class MappingExtensions
 	{
 		public static ReadSimpleUserDto MapToSimpleDto(this User user) =>
-            new ReadSimpleUserDto
+            new()
 			{
 				Id = user.Id,
-				Name = user.Name
+				Name = user.Name,
+				Email = user.Email
 			};
 
 		public static ReadUserDto MapToReadDto(this User user) =>
-			new ReadUserDto
+			new()
 			{
 				Id = user.Id,
 				Name = user.Name,

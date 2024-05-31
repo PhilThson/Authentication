@@ -7,9 +7,9 @@ using System.Text;
 using Authentication.Core.Constants;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
-using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using Authentication.Domain.Interfaces.Services;
+using Microsoft.IdentityModel.JsonWebTokens;
 
 namespace Authentication.Services
 {
@@ -30,32 +30,33 @@ namespace Authentication.Services
 
         public string GenerateToken(User user)
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_jwtKey);
 
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Sub, user.Name),
-                new Claim(AuthConstants.UserIdClaim, user.Id.ToString())
+                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new(JwtRegisteredClaimNames.Sub, user.Name),
+                new(AuthConstants.UserIdClaim, user.Id.ToString())
             };
 
-            if (!int.TryParse(_jwtSettings.ExpirationTimeMin, out int expiration))
-                throw new Exception("Error parsing token expiration time");
-
-            var tokenDescriptior = new SecurityTokenDescriptor
+            var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.Add(TimeSpan.FromMinutes(expiration)),
                 Issuer = _jwtSettings.Issuer,
                 Audience = _jwtSettings.Audience,
+                IssuedAt = null,
+                NotBefore = DateTime.UtcNow,
+                Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationTimeMin),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature)
             };
 
-            var token = tokenHandler.CreateToken(tokenDescriptior);
-            return tokenHandler.WriteToken(token);
+            JsonWebTokenHandler tokenHandler = new()
+            {
+                SetDefaultTimesOnTokenCreation = false
+            };
+            return tokenHandler.CreateToken(tokenDescriptor);
         }
 
         public string GenerateRefreshToken()
@@ -63,10 +64,7 @@ namespace Authentication.Services
             var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
             var tokenIsUnique = !_unitOfWork.User.Exists(u => u.RefreshToken == token);
 
-            if (!tokenIsUnique)
-                return GenerateRefreshToken();
-
-            return token;
+            return !tokenIsUnique ? GenerateRefreshToken() : token;
         }
     }
 }

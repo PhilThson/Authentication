@@ -24,10 +24,11 @@ namespace Authentication.Api.CustomMiddleware
             }
             catch (Exception e)
             {
-                int statusCode = e switch
+                var statusCode = e switch
                 {
                     DataValidationException => StatusCodes.Status400BadRequest,
-                    AuthenticationException => StatusCodes.Status401Unauthorized,
+                    UnauthorizedAccessException
+                    or AuthenticationException => StatusCodes.Status401Unauthorized,
                     NotFoundException => StatusCodes.Status404NotFound,
                     _ => StatusCodes.Status500InternalServerError
                 };
@@ -44,7 +45,7 @@ namespace Authentication.Api.CustomMiddleware
         }
 
         private static string GetResponseMessage(string message) =>
-            JsonSerializer.Serialize(new { Message = message });
+            JsonSerializer.Serialize(new { message = message });
     }
 }
 

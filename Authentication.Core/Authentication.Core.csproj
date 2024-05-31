@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -13,7 +13,6 @@
     <None Remove="Security\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Settings\" />
     <Folder Include="Exceptions\" />
     <Folder Include="Constants\" />
     <Folder Include="Security\" />

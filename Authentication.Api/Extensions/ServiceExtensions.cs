@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using System.Text;
+﻿using System.Text;
+using Authentication.Api.Helpers;
 using Authentication.Core.Settings;
 using Authentication.Core.Constants;
 using Microsoft.IdentityModel.Tokens;
@@ -8,13 +8,14 @@ using Authentication.Domain.Interfaces.Repositories;
 using Authentication.Infrastructure.Repositories;
 using Authentication.Services;
 using Authentication.Domain.Interfaces.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
 
 namespace Authentication.Api.Extensions
 {
     public static class ServiceExtensions
 	{
-        public static AuthenticationBuilder AddTokenAuthentication(this IServiceCollection services,
+        public static void AddTokenAuthentication(this IServiceCollection services,
             IConfiguration configuration)
         {
             var jwtSettings = configuration.GetSection(nameof(JwtSettings)).Get<JwtSettings>();
@@ -30,37 +31,45 @@ namespace Authentication.Api.Extensions
                 ValidateIssuer = true,
                 ValidateAudience = true,
                 ValidateLifetime = true,
+                //tokens expire exactly at token expiration time (instead of 5 minutes later)
                 ClockSkew = TimeSpan.Zero
             };
 
-            //można zarejestrować w celu ponownego użycia w aplikacji
-            //services.AddSingleton(tokenValidationParameters);
-
-            return services.AddAuthentication()
+            services.AddAuthentication()
                 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, o =>
-                    o.TokenValidationParameters = tokenValidationParameters);
+                    o.TokenValidationParameters = tokenValidationParameters)
+                .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthHandler>(AuthConstants.ApiKeyAuth, null);
         }
 
-        public static IServiceCollection AddTokenAuthorizationPolicy(this IServiceCollection services)
+        public static void AddTokenAuthorizationPolicy(this IServiceCollection services)
         {
-            return services.AddAuthorization(c =>
+            services.AddAuthorization(c =>
             {
                 c.AddPolicy(AuthConstants.TokenPolicy, policy => policy
                     .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
                     .RequireClaim(AuthConstants.UserIdClaim)
-                    //.RequireAuthenticatedUser()
-                    );
+                );
+                c.AddPolicy(AuthConstants.ApiKeyAuthPolicy, policy => policy
+                    .AddAuthenticationSchemes(AuthConstants.ApiKeyAuth)
+                    .RequireAuthenticatedUser());
             });
         }
 
-        public static IServiceCollection EnableCors(this IServiceCollection services)
+        public static void EnableCors(this IServiceCollection services, IConfiguration config)
         {
-            return services.AddCors(options =>
+            var allowedOriginsString = config.GetValue<string>("AllowedOrigins");
+            var allowedOrigins = Array.Empty<string>();
+            if (!string.IsNullOrEmpty(allowedOriginsString))
+            {
+                allowedOrigins = allowedOriginsString.Split(",", StringSplitOptions.TrimEntries);
+            }
+
+            services.AddCors(options =>
             {
                 options.AddPolicy(AuthConstants.CorsPolicy, builder => builder
                     .AllowAnyHeader()
                     .AllowAnyMethod()
-                    .WithOrigins("http://localhost:3000", "https://localhost:7129")
+                    .WithOrigins(allowedOrigins)
                     .AllowCredentials());
             });
         }
@@ -72,10 +81,10 @@ namespace Authentication.Api.Extensions
             services.AddScoped<IUserService, UserService>();
         }
 
-        public static void AddSettings(this IServiceCollection services,
-            IConfiguration configuration)
+        public static void AddSettings(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
+            services.Configure<CookieSettings>(configuration.GetSection(nameof(CookieSettings)));
         }
 
         public static void AddSwagger(this IServiceCollection services)

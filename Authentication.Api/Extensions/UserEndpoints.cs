@@ -1,10 +1,14 @@
 ﻿using System.Security.Claims;
 using Authentication.Core.Constants;
+using Authentication.Core.Exceptions;
+using Authentication.Core.Settings;
 using Authentication.Domain.DTOs.Common;
 using Authentication.Domain.DTOs.Create;
 using Authentication.Domain.DTOs.Read;
 using Authentication.Domain.Interfaces.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Authentication.Api.Extensions;
 
@@ -25,7 +29,7 @@ public static class UserEndpoints
         app.MapPost("/register", RegisterUser)
             .WithName("RegisterUser")
             .WithOpenApi()
-            .AllowAnonymous();
+            .RequireAuthorization(AuthConstants.ApiKeyAuthPolicy);
 
         app.MapPost("/authenticate", Authenticate)
             .WithName("Authenticate")
@@ -43,46 +47,80 @@ public static class UserEndpoints
             .RequireAuthorization(AuthConstants.TokenPolicy);
     }
 
-    public static async Task<Ok<IEnumerable<ReadSimpleUserDto>>>
+    private static async Task<Ok<IEnumerable<ReadSimpleUserDto>>>
         GetAllUsers(string? ids, IUserService userService)
     {
         var users = await userService.GetAll(ids);
         return TypedResults.Ok(users);
     }
 
-    public static async Task<Results<Ok<ReadUserDto>, NotFound>>
+    private static async Task<Results<Ok<ReadUserDto>, NotFound>>
         GetUserById(int id, IUserService userService)
-	{
+    {
         var readUserDto = await userService.GetById(id);
         return TypedResults.Ok(readUserDto);
     }
 
-    public static async Task<Results<Created<ReadUserDto>, BadRequest>>
+    private static async Task<Results<Created<ReadUserDto>, BadRequest>>
         RegisterUser(CreateUserDto createUserDto, IUserService userService)
     {
         var readUserDto = await userService.Register(createUserDto);
         return TypedResults.Created(nameof(GetUserById), readUserDto);
     }
 
-    public static async Task<Results<Ok<AuthenticateResponseDto>, NotFound, BadRequest>>
-        Authenticate(AuthenticateRequestDto authenticateDto, IUserService userService)
+    private static async Task<Results<Ok<ReadAuthenticationDto>, NotFound, BadRequest>>
+        Authenticate([FromBody] AuthenticateRequestDto authenticateDto, IUserService userService, 
+            IOptionsMonitor<CookieSettings> cookieOptions, HttpContext httpContext)
     {
         var responseDto = await userService.Authenticate(authenticateDto);
-        return TypedResults.Ok(responseDto);
+        httpContext.Response.Cookies.Append(
+            "RefreshToken",
+            responseDto.RefreshToken, 
+            GetCookieOptions(cookieOptions.CurrentValue, responseDto.RefreshTokenExpirationTimeDays));
+        
+        return TypedResults.Ok(new ReadAuthenticationDto()
+        {
+            JwtToken = responseDto.JwtToken
+        });
     }
 
-    public static async Task<Results<Ok<AuthenticateResponseDto>, NotFound, BadRequest>>
-        RefreshToken(RefreshTokenRequest refreshToken, IUserService userService)
+    private static async Task<Results<Ok<ReadAuthenticationDto>, NotFound, BadRequest>>
+        RefreshToken([FromServices] IUserService userService, HttpContext httpContext,
+            IOptionsMonitor<CookieSettings> cookieOptions)
     {
+        if (!httpContext.Request.Cookies.TryGetValue("RefreshToken", out var refreshToken))
+        {
+            throw new DataValidationException("No refresh token provided");
+        }
         var responseDto = await userService.RefreshToken(refreshToken);
-        return TypedResults.Ok(responseDto);
+        httpContext.Response.Cookies.Append(
+            "RefreshToken", 
+            responseDto.RefreshToken, 
+            GetCookieOptions(cookieOptions.CurrentValue, responseDto.RefreshTokenExpirationTimeDays));
+        
+        return TypedResults.Ok(new ReadAuthenticationDto()
+        {
+            JwtToken = responseDto.JwtToken
+        });
     }
 
-    public static IResult
+    private static IResult
         GetCurrentUser(HttpContext httpContext)
     {
         var id = httpContext.User.FindFirst(c => c.Type == AuthConstants.UserIdClaim)?.Value;
         var name = httpContext.User.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         return Results.Ok(new { Id = id, Name = name });
     }
+
+    private static CookieOptions GetCookieOptions(CookieSettings settings, int refreshTokenExpirationTimeDays) => 
+        new()
+        {
+            HttpOnly = settings.HttpOnly,
+            IsEssential = settings.IsEssential,
+            Secure = settings.Secure,
+            SameSite = SameSiteMode.Unspecified,
+            Expires = DateTimeOffset.UtcNow.AddDays(refreshTokenExpirationTimeDays),
+            MaxAge = TimeSpan.FromDays(refreshTokenExpirationTimeDays),
+            Domain = settings.Domain
+        };
 }

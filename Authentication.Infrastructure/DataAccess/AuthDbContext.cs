@@ -17,7 +17,6 @@ namespace Authentication.Infrastructure.DataAccess
         {
             modelBuilder.Entity<User>(builder =>
             {
-                builder.HasIndex(u => u.Name).IsUnique();
                 builder.HasIndex(u => u.Email).IsUnique();
             });
         }
