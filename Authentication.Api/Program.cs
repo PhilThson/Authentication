@@ -17,7 +17,8 @@ builder.Services.AddTokenAuthorizationPolicy();
 
 builder.Services.AddDbContext<AuthDbContext>(o =>
 {
-    o.UseSqlServer(builder.Configuration.GetConnectionString("Auth"));
+    o.UseSqlServer(builder.Configuration.GetConnectionString("Auth"),
+        sqlServerOptions => sqlServerOptions.EnableRetryOnFailure());
 });
 
 builder.Services.AddServices();
